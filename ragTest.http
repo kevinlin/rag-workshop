@@ -1,0 +1,19 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+### POST request to example server
+POST http://0.0.0.0:8000/v1/api/chats
+Content-Type: application/json
+
+{
+    "question": "Which model are you based on?"
+}
+
+### Knowledge cutoff
+POST http://0.0.0.0:8000/v1/api/chats
+Content-Type: application/json
+
+{
+    "question": "What's your knowledge cutoff?"
+}
