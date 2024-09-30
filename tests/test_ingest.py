@@ -1,8 +1,10 @@
+import nltk
 import pytest
 
-from ingest import read_pdf_content, convert_to_embedding, chunk_text, save_to_vector_db
+from ingest import read_pdf_content, convert_to_embedding, chunk_text
 
 
+@pytest.mark.asyncio
 def test_read_pdf_content():
     read_pdf_content("../input_docs/open-banking.pdf")
 
@@ -20,13 +22,6 @@ async def test_convert_to_embedding():
     embedding = await convert_to_embedding(chunks[0])
     assert embedding is not None
     print("Embedding created:", embedding)
-
-
-@pytest.mark.asyncio
-async def test_save_to_vector_db():
-    chunks = chunk_text(read_pdf_content("../input_docs/open-banking.pdf"))
-    for chunk in chunks:
-        await save_to_vector_db(chunk)
 
 
 def _print_chunks(chunks: list):
