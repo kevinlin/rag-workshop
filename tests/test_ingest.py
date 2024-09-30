@@ -1,7 +1,6 @@
-import nltk
 import pytest
 
-from ingest import read_pdf_content, convert_to_embedding, chunk_text
+from ingest import read_pdf_content, convert_to_embedding, chunk_text, create_search_index
 
 
 @pytest.mark.asyncio
@@ -13,6 +12,11 @@ def test_chunk_text():
     file_content = read_pdf_content("../input_docs/open-banking.pdf")
     chunks = chunk_text(file_content)
     _print_chunks(chunks)
+
+
+@pytest.mark.asyncio
+async def test_create_search_index():
+    await create_search_index()
 
 
 @pytest.mark.asyncio

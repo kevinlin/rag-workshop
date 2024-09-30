@@ -1,20 +1,25 @@
 import os
 import uuid
 from typing import List
-import openai
 
 import httpx
 import nltk
+import openai
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes.aio import SearchIndexClient
-from azure.search.documents.indexes.models import (SimpleField, SearchableField, SearchIndex, VectorSearch,
-                                                   VectorSearchAlgorithmConfiguration)
+from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
+                                                   SearchField,
+                                                   SearchFieldDataType,
+                                                   SearchIndex,
+                                                   SearchableField,
+                                                   SimpleField,
+                                                   VectorSearch,
+                                                   VectorSearchProfile)
 from dotenv import load_dotenv
-from fastapi import HTTPException, UploadFile
+from fastapi import UploadFile
 from nltk import sent_tokenize
 from pydantic import BaseModel
-from starlette.exceptions import HTTPException
 
 load_dotenv()
 
@@ -54,6 +59,7 @@ nltk.download('punkt', quiet=True)
 
 class Document(BaseModel):
     id: str
+    filename: str
     content: str
     embedding: List[float]
 
@@ -78,10 +84,10 @@ def process_document(file: UploadFile):
     embeddings = get_embeddings(chunks)
 
     # Create or update the search index
-    create_search_index()
+    # await create_search_index()
 
     # Upload to Azure Cognitive Search
-    upload_chunks_to_search(chunks, embeddings)
+    upload_chunks_to_search(filename, chunks, embeddings)
 
     return {"message": "File processed and uploaded successfully."}
 
@@ -148,25 +154,28 @@ async def convert_to_embedding(text: str):
     return embedding
 
 
-def create_search_index():
+async def create_search_index():
     # Check if the index exists
     try:
-        index_client.get_index(name=SEARCH_INDEX_NAME)
+        await index_client.get_index(name=SEARCH_INDEX_NAME)
     except Exception:
         # Define the index schema
         fields = [
             SimpleField(name="id", type="Edm.String", key=True),
+            SimpleField(name="filename", type="Edm.String"),
             SearchableField(name="content", type="Edm.String"),
-            SimpleField(
+            SearchField(
                 name="embedding",
-                type="Collection(Edm.Single)",
+                type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                retrievable=True,
                 searchable=True,
-                dimensions=1536,
-                vector_search_configuration="default"
-            )
+                vector_search_dimensions=1536,
+                vector_search_profile_name="default"
+            ),
         ]
         vector_search = VectorSearch(
-            algorithm_configurations=[VectorSearchAlgorithmConfiguration(name="default", kind="hnsw")]
+            profiles=[VectorSearchProfile(name="default", algorithm_configuration_name="default")],
+            algorithms=[HnswAlgorithmConfiguration(name="default")]
         )
 
         index = SearchIndex(
@@ -174,15 +183,18 @@ def create_search_index():
             fields=fields,
             vector_search=vector_search
         )
+
         # Create the index
-        index_client.create_index(index)
+        search_index = await index_client.create_index(index)
+        print(f"Created index: {search_index.name}")
 
 
-def upload_chunks_to_search(chunks, embeddings):
+def upload_chunks_to_search(filename, chunks, embeddings):
     documents = []
     for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
         doc = {
             'id': str(uuid.uuid4()),
+            'filename': filename,
             'content': chunk,
             'embedding': embedding
         }
