@@ -1,7 +1,10 @@
 import os
 import re
+import uuid
 
 import httpx
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents import SearchClient
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from pypdf import PdfReader
@@ -71,32 +74,31 @@ async def convert_to_embedding(text: str):
 
     return embedding
 
+async def save_to_vector_db(text: str):
+    # Initialize the SearchClient
+    search_service_endpoint = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
+    search_index_name = os.getenv("AZURE_SEARCH_INDEX_NAME")
+    search_api_key = os.getenv("AZURE_SEARCH_API_KEY")
 
-def ingestion():
-    # Define the relative path to the PDF file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    pdf_path = os.path.join(current_dir, "input_docs", "open-banking.pdf")
+    search_client = SearchClient(
+        endpoint=search_service_endpoint,
+        index_name=search_index_name,
+        credential=AzureKeyCredential(search_api_key)
+    )
 
-    try:
-        # Attempt to open and read the PDF file
-        with open(pdf_path, "rb") as file:
-            reader = PdfReader(file)
-            text = ""
+    # Convert text to embedding
+    embedding = await convert_to_embedding(text)
 
-            # Extract text from each page
-            for page_num in range(len(reader.pages)):
-                page = reader.pages[page_num]
-                text += page.extract_text()
+    # Create a document with the embedding
+    document = {
+        "id": str(uuid.uuid4()),
+        "content": text,
+        "embedding": embedding
+    }
 
-            # Output the extracted text
-            print(text)
+    # Upload the document to the Azure AI Search index
+    result = search_client.upload_documents(documents=[document])
+    if not result[0].succeeded:
+        raise HTTPException(status_code=500, detail="Failed to upload document to Azure AI Search")
 
-    # Exception handling for various potential issues
-
-    except FileNotFoundError:
-        print(f"Error: The file '{pdf_path}' was not found.")
-    except PermissionError:
-        print(f"Error: You do not have permission to access the file '{pdf_path}'.")
-    except Exception as e:
-        # General exception handler to catch other errors (e.g., PDF parsing issues)
-        print(f"An error occurred while reading the PDF: {e}")
+    print("Document uploaded successfully")

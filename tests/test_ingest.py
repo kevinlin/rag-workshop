@@ -1,6 +1,6 @@
 import pytest
 
-from ingest import ingestion, read_pdf_content, convert_to_embedding, chunk_text
+from ingest import read_pdf_content, convert_to_embedding, chunk_text, save_to_vector_db
 
 
 def test_read_pdf_content():
@@ -16,9 +16,17 @@ def test_chunk_text():
 @pytest.mark.asyncio
 async def test_convert_to_embedding():
     chunks = chunk_text(read_pdf_content("../input_docs/open-banking.pdf"))
+
     embedding = await convert_to_embedding(chunks[0])
     assert embedding is not None
     print("Embedding created:", embedding)
+
+
+@pytest.mark.asyncio
+async def test_save_to_vector_db():
+    chunks = chunk_text(read_pdf_content("../input_docs/open-banking.pdf"))
+    for chunk in chunks:
+        await save_to_vector_db(chunk)
 
 
 def _print_chunks(chunks: list):
