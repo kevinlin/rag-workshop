@@ -161,9 +161,9 @@ async def create_search_index():
     except Exception:
         # Define the index schema
         fields = [
-            SimpleField(name="id", type="Edm.String", key=True),
-            SimpleField(name="filename", type="Edm.String"),
-            SearchableField(name="content", type="Edm.String"),
+            SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+            SimpleField(name="filename", type=SearchFieldDataType.String, filterable=True),
+            SearchableField(name="content", type=SearchFieldDataType.String),
             SearchField(
                 name="embedding",
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
