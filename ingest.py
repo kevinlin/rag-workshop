@@ -170,7 +170,7 @@ async def create_search_index():
                 retrievable=True,
                 searchable=True,
                 vector_search_dimensions=1536,
-                vector_search_profile_name="default"
+                vector_search_profile_name="default" # use default `myHnswProfile`
             ),
         ]
         vector_search = VectorSearch(
