@@ -15,8 +15,6 @@ from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
                                                    VectorSearchProfile)
 from azure.search.documents.models import VectorizedQuery
 
-from repository_openai import get_embedding
-
 # Azure AI Search configurations
 SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
 SEARCH_API_KEY = os.getenv("AZURE_SEARCH_API_KEY")
