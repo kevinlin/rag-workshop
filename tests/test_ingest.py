@@ -1,6 +1,6 @@
 import pytest
 
-from ingest import read_pdf_content, convert_to_embedding, chunk_text, create_search_index
+from ingest import read_pdf_content, get_embedding, chunk_text, create_search_index
 
 
 @pytest.mark.asyncio
@@ -20,10 +20,11 @@ async def test_create_search_index():
 
 
 @pytest.mark.asyncio
-async def test_convert_to_embedding():
-    chunks = chunk_text(read_pdf_content("../input_docs/open-banking.pdf"))
+async def test_get_embedding():
+    content = await read_pdf_content("../input_docs/open-banking.pdf")
+    chunks = chunk_text(content)
 
-    embedding = await convert_to_embedding(chunks[0])
+    embedding = await get_embedding(chunks[0])
     assert embedding is not None
     print("Embedding created:", embedding)
 
