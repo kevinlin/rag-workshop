@@ -1,6 +1,6 @@
 import pytest
 
-from ingest import read_pdf_content, get_embedding, chunk_text, create_search_index
+from ingest import read_pdf_content, get_embedding, chunk_text, create_search_index, search_chunks
 
 
 @pytest.mark.asyncio
@@ -27,6 +27,12 @@ async def test_get_embedding():
     embedding = await get_embedding(chunks[0])
     assert embedding is not None
     print("Embedding created:", embedding)
+
+@pytest.mark.asyncio
+async def test_search_chunks():
+    question = "What is open banking?"
+    chunks = await search_chunks(question)
+    _print_chunks(chunks)
 
 
 def _print_chunks(chunks: list):
