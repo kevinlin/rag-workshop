@@ -8,7 +8,7 @@ def doc_router() -> APIRouter:
     @router.post("/upload")
     async def upload_file(file: UploadFile = File(...)):
         # Process the uploaded file
-        result = process_document(file)
+        result = await process_document(file)
         return result
 
     return router

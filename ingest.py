@@ -4,7 +4,6 @@ from typing import List
 
 import httpx
 import nltk
-import openai
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes.aio import SearchIndexClient
@@ -18,7 +17,8 @@ from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
                                                    VectorSearchProfile)
 from dotenv import load_dotenv
 from fastapi import UploadFile
-from nltk import sent_tokenize
+from nltk import word_tokenize
+from openai.lib.azure import AsyncAzureOpenAI
 from pydantic import BaseModel
 
 load_dotenv()
@@ -32,10 +32,9 @@ OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 EMBEDDING_ENGINE = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
 OPENAI_EMBEDDING_ENDPOINT = os.getenv("AZURE_OPENAI_EMBEDDING_ENDPOINT")
 
-openai.api_type = "azure"
-openai.api_base = OPENAI_ENDPOINT
-openai.api_version = OPENAI_API_VERSION
-openai.api_key = OPENAI_API_KEY
+openai_client = AsyncAzureOpenAI(azure_endpoint=OPENAI_ENDPOINT,
+                                 api_version=OPENAI_API_VERSION,
+                                 api_key=OPENAI_API_KEY)
 
 # Azure AI Search configurations
 SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
@@ -64,7 +63,7 @@ class Document(BaseModel):
     embedding: List[float]
 
 
-def process_document(file: UploadFile):
+async def process_document(file: UploadFile):
     # Read the file content
     content = file.file.read()
     filename = file.filename.lower()
@@ -81,7 +80,7 @@ def process_document(file: UploadFile):
     chunks = chunk_text(text, chunk_size)
 
     # Generate embeddings
-    embeddings = get_embeddings(chunks)
+    embeddings = await get_embeddings(chunks)
 
     # Create or update the search index
     # await create_search_index()
@@ -104,7 +103,7 @@ def extract_text_from_pdf(pdf_bytes):
 
 
 def chunk_text(text: str, max_chunk_size=500) -> list:
-    sentences = sent_tokenize(text)
+    sentences = word_tokenize(text)
     chunks = []
     current_chunk = ''
 
@@ -119,21 +118,22 @@ def chunk_text(text: str, max_chunk_size=500) -> list:
     return chunks
 
 
-def get_embeddings(chunks):
+async def get_embeddings(chunks):
     embeddings = []
     for chunk in chunks:
-        embedding = get_embedding(chunk)
+        embedding = await get_embedding(chunk)
         embeddings.append(embedding)
 
     return embeddings
 
 
-def get_embedding(text):
-    response = openai.embeddings.create(
-        input=text,
+async def get_embedding(chunk):
+    response = await openai_client.embeddings.create(
+        input=chunk,
         model=EMBEDDING_ENGINE
     )
     embedding = response.data[0].embedding
+
     return embedding
 
 
@@ -162,15 +162,15 @@ async def create_search_index():
         # Define the index schema
         fields = [
             SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-            SimpleField(name="filename", type=SearchFieldDataType.String, filterable=True),
+            SearchableField(name="filename", type=SearchFieldDataType.String, filterable=True, sortable=True),
             SearchableField(name="content", type=SearchFieldDataType.String),
             SearchField(
                 name="embedding",
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
-                retrievable=True,
+                hidden=False,
                 searchable=True,
                 vector_search_dimensions=1536,
-                vector_search_profile_name="default" # use default `myHnswProfile`
+                vector_search_profile_name="default"  # use default `myHnswProfile`
             ),
         ]
         vector_search = VectorSearch(
@@ -208,8 +208,8 @@ def upload_chunks_to_search(filename, chunks, embeddings):
 # Old code
 async def read_pdf_content(file_path: str) -> str:
     with open(file_path, "rb") as file:
-        content = await file.read()
-        filename = file.filename.lower()
+        content = file.read()
+        filename = file_path.lower()
 
         # Extract text based on file type
         if filename.endswith('.pdf'):
@@ -218,7 +218,7 @@ async def read_pdf_content(file_path: str) -> str:
             text = content.decode('utf-8')
         else:
             print(f"Unsupported file type: {filename}. Please upload a PDF or TXT file.")
-            return {"error": "Unsupported file type. Please upload a PDF or TXT file."}
+            return f"Unsupported file type: {filename}. Please upload a PDF or TXT file."
 
         print(f"Extracted text from {filename}")
         return text
