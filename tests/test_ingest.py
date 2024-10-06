@@ -1,14 +1,16 @@
 from io import BytesIO
 
+import tiktoken
+
 import pytest
 from starlette.datastructures import UploadFile
 
 from ingest import read_pdf_content, chunk_text, process_document
 
 
-@pytest.mark.asyncio
 def test_read_pdf_content():
-    read_pdf_content("../input_docs/open-banking.pdf")
+    file_content = read_pdf_content("../input_docs/open-banking.pdf")
+    print(f"Extracted text: {file_content}")
 
 
 def test_chunk_text():
@@ -58,9 +60,12 @@ async def test_process_document_pdf():
 
 
 def print_chunks(chunks: list):
+    encoding = tiktoken.encoding_for_model('gpt-4o-mini')
+
     for index, chunk in enumerate(chunks):
-        preview = ' '.join(chunk.split()[:100]) + '...'  # Get the first few words
+        # preview = ' '.join(chunk.split()[:100]) + '...'  # Get the first few words
         print(f"Chunk {index + 1}:")
+        print(f"Tokens: {len(encoding.encode(chunk))}")
         print(f"Length: {len(chunk)}")
-        print(f"Content: {preview}")
+        print(f"Content: {chunk}")
         print("-" * 40)

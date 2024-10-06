@@ -3,13 +3,18 @@ import uuid
 from typing import List
 
 import nltk
+from dotenv import load_dotenv
 from fastapi import UploadFile
-from nltk import word_tokenize
+from nltk import word_tokenize, sent_tokenize
 from pydantic import BaseModel
+import tiktoken
 
 from repository_openai import get_embedding
 from repository_vector_db import ai_search_client, create_search_index
 
+load_dotenv()
+
+model_name = os.getenv("AZURE_OPENAI_CHAT_MODEL", "t5-small")
 chunk_size = int(os.getenv("CHUNK_SIZE", "500"))
 
 # Initialize NLTK
@@ -37,7 +42,7 @@ async def process_document(file: UploadFile):
         return {"error": "Unsupported file type. Please upload a PDF or TXT file."}
 
     # Chunk the text
-    chunks = chunk_text(text, chunk_size)
+    chunks = chunk_text(text, chunk_size, model_name)
 
     # Generate embeddings
     embeddings = await get_embeddings(chunks)
@@ -62,16 +67,25 @@ def extract_text_from_pdf(pdf_bytes):
     return text
 
 
-def chunk_text(text: str, max_chunk_size=500) -> list:
-    sentences = word_tokenize(text)
+def chunk_text(text: str, max_tokens=500, model_name='gpt-4o-mini') -> list:
+    # Initialize the tokenizer
+    encoding = tiktoken.encoding_for_model(model_name)
+
+    sentences = sent_tokenize(text)
     chunks = []
     current_chunk = ''
 
     for sentence in sentences:
-        if len(current_chunk) + len(sentence) <= max_chunk_size:
-            current_chunk += ' ' + sentence
+        # Estimate tokens in the current chunk and the new sentence
+        current_tokens = len(encoding.encode(current_chunk))
+        sentence_tokens = len(encoding.encode(sentence))
+
+        if current_tokens + sentence_tokens <= max_tokens:
+            current_chunk += ' ' + sentence if current_chunk else sentence
         else:
-            chunks.append(current_chunk.strip())
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+
             current_chunk = sentence
     if current_chunk:
         chunks.append(current_chunk.strip())
@@ -104,7 +118,7 @@ async def upload_chunks_to_search(filename, chunks, embeddings):
 
 
 # Used for testing only
-async def read_pdf_content(file_path: str) -> str:
+def read_pdf_content(file_path: str) -> str:
     with open(file_path, "rb") as file:
         content = file.read()
         filename = file_path.lower()
@@ -118,5 +132,4 @@ async def read_pdf_content(file_path: str) -> str:
             print(f"Unsupported file type: {filename}. Please upload a PDF or TXT file.")
             return f"Unsupported file type: {filename}. Please upload a PDF or TXT file."
 
-        print(f"Extracted text from {filename}")
         return text
