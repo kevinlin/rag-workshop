@@ -10,16 +10,27 @@ load_dotenv()
 OPENAI_API_VERSION = os.getenv("OPENAI_API_VERSION")
 OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
-OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_API_DEPLOYMENT")
+OPENAI_EMBEDDING_MODEL = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
+OPENAI_CHAT_MODEL = os.getenv("AZURE_OPENAI_API_DEPLOYMENT")
 
 openai_client = AsyncAzureOpenAI(azure_endpoint=OPENAI_ENDPOINT,
                                  api_key=OPENAI_API_KEY,
                                  api_version=OPENAI_API_VERSION)
 
 
-async def get_openai_answer(messages: List[dict]) -> str:
+async def get_embedding(text):
+    response = await openai_client.embeddings.create(
+        input=text,
+        model=OPENAI_EMBEDDING_MODEL
+    )
+    embedding = response.data[0].embedding
+
+    return embedding
+
+
+async def get_chat_answer(messages: List[dict]) -> str:
     response = await openai_client.chat.completions.create(
-        model=OPENAI_DEPLOYMENT,
+        model=OPENAI_CHAT_MODEL,
         messages=messages,
         max_tokens=500,
         temperature=0.7,

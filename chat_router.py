@@ -3,8 +3,8 @@ from typing import List
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from ingest import search_chunks
-from llm import get_openai_answer
+from repository_openai import get_chat_answer, get_embedding
+from repository_vector_db import search_chunks
 
 AZURE_OPENAI_ENDPOINT = "https://<your-endpoint>.openai.azure.com/openai/deployments/<your-deployment>/completions?api-version=2022-12-01"
 AZURE_OPENAI_API_KEY = "<your-api-key>"
@@ -31,15 +31,18 @@ def chat_router() -> APIRouter:
         # Append the question to the chat history
         chat_history.append({"role": "user", "content": question})
 
-        # Retrieve the best 3 chunks from Azure Cognitive Search
-        top_chunks = await search_chunks(question, top_k=3)
+        # Get embedding of the question
+        question_embedding = await get_embedding(question)
+
+        # Retrieve the best 3 chunks from Azure AI Search
+        top_chunks = await search_chunks(question, question_embedding, top_k=3)
 
         # Construct the messages with chat history and context
         messages = construct_messages(chat_history, top_chunks)
-        print(f"get_chat_response()->messages: {messages}")
+        # print(f"get_chat_response()->messages: {messages}")
 
         # Get the answer from Azure OpenAI
-        answer = await get_openai_answer(messages)
+        answer = await get_chat_answer(messages)
         print(f"get_chat_response()->answer: {answer}")
 
         # Append the assistant's answer to the chat history
