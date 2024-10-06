@@ -1,13 +1,10 @@
 import os
 import uuid
-from lib2to3.pgen2.token import NEWLINE
 from typing import List
 
-import httpx
 import nltk
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.aio import SearchClient
-from azure.search.documents.models import VectorQuery, VectorizedQuery
 from azure.search.documents.indexes.aio import SearchIndexClient
 from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
                                                    SearchField,
@@ -17,12 +14,12 @@ from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
                                                    SimpleField,
                                                    VectorSearch,
                                                    VectorSearchProfile)
+from azure.search.documents.models import VectorizedQuery
 from dotenv import load_dotenv
 from fastapi import UploadFile
 from nltk import word_tokenize
 from openai.lib.azure import AsyncAzureOpenAI
 from pydantic import BaseModel
-import numpy as np
 
 load_dotenv()
 
@@ -136,23 +133,6 @@ async def get_embedding(text):
         model=EMBEDDING_ENGINE
     )
     embedding = response.data[0].embedding
-
-    return embedding
-
-
-async def convert_to_embedding(text: str):
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": OPENAI_API_KEY
-    }
-    data = {
-        "input": text
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post(OPENAI_EMBEDDING_ENDPOINT, headers=headers, json=data)
-        response.raise_for_status()
-        embedding = response.json()["data"][0]["embedding"]
 
     return embedding
 
