@@ -8,8 +8,8 @@ from doc_router import doc_router
 def init():
     app = FastAPI()
 
-    app.include_router(doc_router(), prefix="/v1/api/docs")
-    app.include_router(chat_router(), prefix="/v1/api/chat")
+    app.include_router(doc_router(), prefix="/api/v1/docs")
+    app.include_router(chat_router(), prefix="/api/v1/chat")
 
     return app
 
