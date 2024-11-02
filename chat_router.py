@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from ingest import print_chunks
 from repository_openai import get_chat_answer, get_embedding
 from repository_vector_db import search_chunks
 
@@ -36,6 +37,8 @@ def chat_router() -> APIRouter:
 
         # Retrieve the best 3 chunks from Azure AI Search
         top_chunks = await search_chunks(question, question_embedding, top_k=3)
+        print("get_chat_response()->top_chunks:")
+        print_chunks(top_chunks)
 
         # Construct the messages with chat history and context
         messages = construct_messages(chat_history, top_chunks)

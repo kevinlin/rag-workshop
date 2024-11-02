@@ -5,7 +5,7 @@ import tiktoken
 import pytest
 from starlette.datastructures import UploadFile
 
-from ingest import read_pdf_content, chunk_text, process_document
+from ingest import read_pdf_content, chunk_text, process_document, print_chunks
 
 
 def test_read_pdf_content():
@@ -58,14 +58,3 @@ async def test_process_document_pdf():
     print(result)
     assert result['message'] == 'File processed and uploaded successfully.'
 
-
-def print_chunks(chunks: list):
-    encoding = tiktoken.encoding_for_model('gpt-4o-mini')
-
-    for index, chunk in enumerate(chunks):
-        # preview = ' '.join(chunk.split()[:100]) + '...'  # Get the first few words
-        print(f"Chunk {index + 1}:")
-        print(f"Tokens: {len(encoding.encode(chunk))}")
-        print(f"Length: {len(chunk)}")
-        print(f"Content: {chunk}")
-        print("-" * 40)

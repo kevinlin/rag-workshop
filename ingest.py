@@ -133,3 +133,15 @@ def read_pdf_content(file_path: str) -> str:
             return f"Unsupported file type: {filename}. Please upload a PDF or TXT file."
 
         return text
+
+
+def print_chunks(chunks: list):
+    encoding = tiktoken.encoding_for_model('gpt-4o-mini')
+
+    for index, chunk in enumerate(chunks):
+        # preview = ' '.join(chunk.split()[:100]) + '...'  # Get the first few words
+        print(f"Chunk {index + 1}:")
+        print(f"Tokens: {len(encoding.encode(chunk))}")
+        print(f"Length: {len(chunk)}")
+        print(f"Content: {chunk}")
+        print("-" * 40)
