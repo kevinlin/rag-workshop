@@ -4,11 +4,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from ingest import print_chunks
-from repository_openai import get_chat_answer, get_embedding
+from repository_azureai_inference import get_chat_answer, get_embedding
 from repository_vector_db import search_chunks
-
-AZURE_OPENAI_ENDPOINT = "https://<your-endpoint>.openai.azure.com/openai/deployments/<your-deployment>/completions?api-version=2022-12-01"
-AZURE_OPENAI_API_KEY = "<your-api-key>"
 
 # In-memory chat history (global variable for now)
 chat_history = []
