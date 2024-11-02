@@ -16,26 +16,26 @@ from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
 from azure.search.documents.models import VectorizedQuery
 
 # Azure AI Search configurations
-SEARCH_ENDPOINT = os.getenv("AI_SEARCH_ENDPOINT")
-SEARCH_API_KEY = os.getenv("AI_SEARCH_API_KEY")
-SEARCH_INDEX_NAME = os.getenv("AI_SEARCH_INDEX_NAME")
+AI_SEARCH_ENDPOINT = os.getenv("AI_SEARCH_ENDPOINT")
+AI_SEARCH_API_KEY = os.getenv("AI_SEARCH_API_KEY")
+AI_SEARCH_INDEX_NAME = os.getenv("AI_SEARCH_INDEX_NAME")
 
 ai_search_index_client = SearchIndexClient(
-    endpoint=SEARCH_ENDPOINT,
-    credential=AzureKeyCredential(SEARCH_API_KEY)
+    endpoint=AI_SEARCH_ENDPOINT,
+    credential=AzureKeyCredential(AI_SEARCH_API_KEY)
 )
 
 ai_search_client = SearchClient(
-    endpoint=SEARCH_ENDPOINT,
-    index_name=SEARCH_INDEX_NAME,
-    credential=AzureKeyCredential(SEARCH_API_KEY)
+    endpoint=AI_SEARCH_ENDPOINT,
+    index_name=AI_SEARCH_INDEX_NAME,
+    credential=AzureKeyCredential(AI_SEARCH_API_KEY)
 )
 
 
 async def create_search_index():
     # Check if the index exists
     try:
-        await ai_search_index_client.get_index(name=SEARCH_INDEX_NAME)
+        await ai_search_index_client.get_index(name=AI_SEARCH_INDEX_NAME)
     except ResourceNotFoundError:
         # Create the index
         fields = [
@@ -57,7 +57,7 @@ async def create_search_index():
         )
 
         index = SearchIndex(
-            name=SEARCH_INDEX_NAME,
+            name=AI_SEARCH_INDEX_NAME,
             fields=fields,
             vector_search=vector_search
         )
