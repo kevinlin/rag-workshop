@@ -15,14 +15,9 @@ OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 OPENAI_EMBEDDING_MODEL = os.getenv("AZURE_OPENAI_EMBEDDING_MODEL")
 OPENAI_CHAT_MODEL = os.getenv("AZURE_OPENAI_CHAT_MODEL")
 
-# openai_client = AsyncAzureOpenAI(azure_endpoint=OPENAI_ENDPOINT,
-#                                  api_key=OPENAI_API_KEY,
-#                                  api_version=OPENAI_API_VERSION)\\
-
 embedding_client = EmbeddingsClient(
     endpoint=OPENAI_ENDPOINT + '/openai/deployments/' + OPENAI_EMBEDDING_MODEL,
     credential=AzureKeyCredential(OPENAI_API_KEY),
-    # Azure OpenAI api-version. See https://aka.ms/azsdk/azure-ai-inference/azure-openai-api-versions
     api_version=OPENAI_API_VERSION
 )
 

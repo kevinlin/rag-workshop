@@ -16,9 +16,9 @@ from azure.search.documents.indexes.models import (HnswAlgorithmConfiguration,
 from azure.search.documents.models import VectorizedQuery
 
 # Azure AI Search configurations
-SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
-SEARCH_API_KEY = os.getenv("AZURE_SEARCH_API_KEY")
-SEARCH_INDEX_NAME = os.getenv("AZURE_SEARCH_INDEX_NAME")
+SEARCH_ENDPOINT = os.getenv("AI_SEARCH_ENDPOINT")
+SEARCH_API_KEY = os.getenv("AI_SEARCH_API_KEY")
+SEARCH_INDEX_NAME = os.getenv("AI_SEARCH_INDEX_NAME")
 
 ai_search_index_client = SearchIndexClient(
     endpoint=SEARCH_ENDPOINT,
