@@ -67,11 +67,13 @@ def construct_messages(chat_history: List[dict], chunks: List[str]) -> List[dict
 
     system_prompt = {
         "role": "system",
-        "content": "You are an AI Assistant helping to compare different health insurance policies. Be brief in your "
-                   "answers. Answer ONLY with the facts listed in the list of sources below. If there isn't enough "
-                   "information below, say you don't know. Do not generate answers that don't use the sources below. "
-                   "Each source has a name followed by colon and the actual information, include the source name for "
-                   "each fact you use. Use square brackets to reference the source, for example [info1.txt]."}
+        "content": "You are an AI Assistant helping to compare different health insurance policies. "
+                   "Be brief in your answers. "
+                   "Answer ONLY with the facts listed in the list of sources below. "
+                   "If there isn't enough information below, say you don't know. "
+                   "Do not generate answers that don't use the sources below. "
+                   "Each source has a name followed by colon and the actual information, include the source name for each fact you use. "
+                   "Use square brackets to reference the source, for example [info1.txt]."}
     messages.insert(0, system_prompt)
 
     return messages
